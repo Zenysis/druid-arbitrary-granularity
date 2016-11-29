@@ -38,7 +38,7 @@ This will build the arbitrary granularity extension and place it in
 The arbitrary granularity takes an array of time intervals which will define
 the buckets used during querying. It uses the same `intervals` format as the
 normal query interval.
-```json
+```javascript
 {
   ...
   "granularity": {
@@ -66,7 +66,7 @@ each quarter is not the same length. The arbitrary granularity extension
 can fix this:
 
 Quarter start: October 1, 2015
-```json
+```javascript
 {
   ...
   "intervals": [
@@ -90,7 +90,7 @@ Quarter start: October 1, 2015
 
 ##### Weekday vs Weekend
 Month: October 2016
-```json
+```javascript
 {
   ...
   "intervals": [
