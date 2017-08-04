@@ -1,1 +1,1 @@
-io.druid.granularity.ArbitraryGranularityModule
+io.druid.java.util.common.granularity.ArbitraryGranularityModule
