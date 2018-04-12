@@ -32,8 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
 
+import io.druid.java.util.common.DateTimes;
 import io.druid.java.util.common.IAE;
-import io.druid.java.util.common.JodaUtils;
 import io.druid.java.util.common.guava.Comparators;
 import io.druid.java.util.common.StringUtils;
 
@@ -50,7 +50,7 @@ public class ArbitraryGranularity extends Granularity
 {
   private final TreeSet<Interval> intervals;
   private final DateTimeZone timezone;
-  private static final DateTime MAX_DATETIME = new DateTime(JodaUtils.MAX_INSTANT);
+  private static final DateTime MAX_DATETIME = DateTimes.MAX;
 
   @JsonCreator
   public ArbitraryGranularity(
