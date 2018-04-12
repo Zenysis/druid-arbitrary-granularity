@@ -32,7 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
 
-import io.druid.common.utils.JodaUtils;
+import io.druid.java.util.common.IAE;
+import io.druid.java.util.common.JodaUtils;
 import io.druid.java.util.common.guava.Comparators;
 import io.druid.java.util.common.StringUtils;
 
@@ -53,8 +54,8 @@ public class ArbitraryGranularity extends Granularity
 
   @JsonCreator
   public ArbitraryGranularity(
-    @JsonProperty("intervals") List<Interval> inputIntervals,
-    @JsonProperty("timezone") DateTimeZone timezone
+      @JsonProperty("intervals") List<Interval> inputIntervals,
+      @JsonProperty("timezone") DateTimeZone timezone
   )
   {
     this.intervals = Sets.newTreeSet(Comparators.intervalsByStartThenEnd());
@@ -86,12 +87,10 @@ public class ArbitraryGranularity extends Granularity
       if (intervalIterator.hasNext()) {
         final Interval nextInterval = intervalIterator.peek();
         if (currentInterval.overlaps(nextInterval)) {
-          throw new IllegalArgumentException(
-              String.format(
-                  "Overlapping granularity intervals: %s, %s",
-                  currentInterval,
-                  nextInterval
-              )
+          throw new IAE(
+            "Overlapping granularity intervals: %s, %s",
+            currentInterval,
+            nextInterval
           );
         }
       }
@@ -128,7 +127,8 @@ public class ArbitraryGranularity extends Granularity
   }
 
   @Override
-  public DateTime increment(DateTime time) {
+  public DateTime increment(DateTime time)
+  {
     // Test if the input cannot be bucketed
     if (time.getMillis() > intervals.last().getEndMillis()) {
       return MAX_DATETIME;
