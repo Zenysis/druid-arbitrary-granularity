@@ -24,24 +24,20 @@ package org.apache.druid.java.util.common.granularity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
-import com.google.common.collect.Sets;
-
 import org.apache.druid.java.util.common.DateTimes;
 import org.apache.druid.java.util.common.IAE;
-import org.apache.druid.java.util.common.guava.Comparators;
 import org.apache.druid.java.util.common.StringUtils;
-
+import org.apache.druid.java.util.common.guava.Comparators;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
@@ -58,11 +54,11 @@ public class ArbitraryGranularity extends Granularity
       @JsonProperty("timezone") DateTimeZone timezone
   )
   {
-    this.intervals = Sets.newTreeSet(Comparators.intervalsByStartThenEnd());
+    this.intervals = new TreeSet<>(Comparators.intervalsByStartThenEnd());
     this.timezone = timezone == null ? DateTimeZone.UTC : timezone;
 
     if (inputIntervals == null) {
-      inputIntervals = Lists.newArrayList();
+      inputIntervals = new ArrayList<>();
     }
 
     Preconditions.checkArgument(inputIntervals.size() > 0,
