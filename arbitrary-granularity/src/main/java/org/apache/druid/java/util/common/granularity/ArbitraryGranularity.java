@@ -106,6 +106,15 @@ public class ArbitraryGranularity extends Granularity
 
   // Used only for Segments. Not for Queries
   @Override
+  public boolean isAligned(Interval interval)
+  {
+    throw new UnsupportedOperationException(
+      "This method should not be invoked for this granularity type"
+    );
+  }
+
+  // Used only for Segments. Not for Queries
+  @Override
   public DateTimeFormatter getFormatter(Formatter type)
   {
     throw new UnsupportedOperationException(
