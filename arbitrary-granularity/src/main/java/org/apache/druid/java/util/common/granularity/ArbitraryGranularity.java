@@ -154,9 +154,14 @@ public class ArbitraryGranularity extends Granularity
       return MAX_DATETIME;
     }
 
-    // Just return the input. The iterable override will
-    // define the buckets that should be used.
-    return time;
+    // Find the interval that contains this time.
+    // intervalStart <= time < intervalEnd.
+    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME));
+    if (interval == null || !interval.contains(time)) {
+      return MAX_DATETIME;
+    }
+
+    return interval.getStart();
   }
 
   @Override
