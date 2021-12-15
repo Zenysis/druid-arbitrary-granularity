@@ -132,6 +132,13 @@ public class ArbitraryGranularity extends Granularity
   }
 
   @Override
+  public long increment(long time)
+  {
+    // Not sure how else to accomplish this with arbitrary intervals. toDateTime(time) defeats the purpose of #10904
+    return increment(toDateTime(time)).getMillis();
+  }
+
+  @Override
   public DateTime increment(DateTime time)
   {
     // Test if the input cannot be bucketed
@@ -144,6 +151,13 @@ public class ArbitraryGranularity extends Granularity
     return interval != null && interval.contains(time)
             ? interval.getEnd()
             : time;
+  }
+
+  @Override
+  public long bucketStart(long time)
+  {
+    // Not sure how else to accomplish this with arbitrary intervals. toDateTime(time) defeats the purpose of #10904
+    return bucketStart(toDateTime(time)).getMillis();
   }
 
   @Override
@@ -225,7 +239,7 @@ public class ArbitraryGranularity extends Granularity
   @Override
   public byte[] getCacheKey()
   {
-    return StringUtils.toUtf8(getPrettyIntervals() + ":" + timezone.toString());
+    return StringUtils.toUtf8(getPrettyIntervals() + ":" + timezone);
   }
 
   @Override
@@ -265,13 +279,13 @@ public class ArbitraryGranularity extends Granularity
 
   private String getPrettyIntervals()
   {
-    StringBuilder bob = new StringBuilder('[');
+    StringBuilder bob = new StringBuilder("[");
     boolean hit = false;
     for (Interval interval : intervals) {
       if (hit) {
         bob.append(',');
       }
-      bob.append(interval.toString());
+      bob.append(interval);
       hit = true;
     }
     bob.append(']');
