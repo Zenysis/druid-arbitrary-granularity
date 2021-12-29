@@ -40,11 +40,14 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.TreeSet;
 
 public class ArbitraryGranularity extends Granularity
 {
-  private final TreeSet<Interval> intervals;
+  public static final String METHOD_NOT_SUPPORTED_MSG = "This method should not be invoked for this granularity type";
+  private final NavigableSet<Interval> intervals;
   private final DateTimeZone timezone;
   private static final DateTime MAX_DATETIME = DateTimes.MAX;
 
@@ -99,7 +102,7 @@ public class ArbitraryGranularity extends Granularity
   }
 
   @JsonProperty("intervals")
-  public TreeSet<Interval> getIntervals()
+  public NavigableSet<Interval> getIntervals()
   {
     return this.intervals;
   }
@@ -108,41 +111,43 @@ public class ArbitraryGranularity extends Granularity
   @Override
   public boolean isAligned(Interval interval)
   {
-    throw new UnsupportedOperationException(
-      "This method should not be invoked for this granularity type"
-    );
+    throw new UnsupportedOperationException(METHOD_NOT_SUPPORTED_MSG);
   }
 
   // Used only for Segments. Not for Queries
   @Override
   public DateTimeFormatter getFormatter(Formatter type)
   {
-    throw new UnsupportedOperationException(
-      "This method should not be invoked for this granularity type"
-    );
+    throw new UnsupportedOperationException(METHOD_NOT_SUPPORTED_MSG);
   }
 
   // Used only for Segments. Not for Queries
   @Override
   public DateTime toDate(String filePath, Formatter formatter)
   {
-    throw new UnsupportedOperationException(
-      "This method should not be invoked for this granularity type"
-    );
+    throw new UnsupportedOperationException(METHOD_NOT_SUPPORTED_MSG);
   }
 
   @Override
   public long increment(long time)
   {
-    // Not sure how else to accomplish this with arbitrary intervals. toDateTime(time) defeats the purpose of #10904
-    return increment(toDateTime(time)).getMillis();
+    // Test if the input cannot be bucketed
+    if (time >= intervals.last().getEndMillis()) {
+      return MAX_DATETIME.getMillis();
+    }
+
+    // First interval with start time <= timestamp
+    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis()));
+    return interval != null && interval.contains(time)
+            ? interval.getEnd().getMillis()
+            : MAX_DATETIME.getMillis(); // cannot be bucketed
   }
 
   @Override
   public DateTime increment(DateTime time)
   {
     // Test if the input cannot be bucketed
-    if (time.getMillis() > intervals.last().getEndMillis()) {
+    if (time.getMillis() >= intervals.last().getEndMillis()) {
       return MAX_DATETIME;
     }
 
@@ -150,14 +155,25 @@ public class ArbitraryGranularity extends Granularity
     final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME));
     return interval != null && interval.contains(time)
             ? interval.getEnd()
-            : time;
+            : MAX_DATETIME; // cannot be bucketed
   }
 
   @Override
   public long bucketStart(long time)
   {
-    // Not sure how else to accomplish this with arbitrary intervals. toDateTime(time) defeats the purpose of #10904
-    return bucketStart(toDateTime(time)).getMillis();
+    // Test if the input cannot be bucketed
+    if (time >= intervals.last().getEndMillis()) {
+      return MAX_DATETIME.getMillis();
+    }
+
+    // Find the interval that contains this time.
+    // intervalStart <= time < intervalEnd.
+    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis()));
+    if (interval == null || !interval.contains(time)) {
+      return MAX_DATETIME.getMillis();
+    }
+
+    return interval.getStart().getMillis();
   }
 
   @Override
@@ -197,42 +213,40 @@ public class ArbitraryGranularity extends Granularity
       return ImmutableList.of();
     }
 
-    return new Iterable<Interval>()
-    {
-      @Override
-      public Iterator<Interval> iterator()
+    return () -> {
+      // Skip over the intervals that are known to be invalid
+      // because they end before the requested start timestamp
+      final PeekingIterator<Interval> intervalIterator =
+          Iterators.peekingIterator(intervals.iterator());
+      while (intervalIterator.hasNext() &&
+             intervalIterator.peek().getEndMillis() <= start) {
+        intervalIterator.next();
+      }
+
+      return new Iterator<Interval>()
       {
-        // Skip over the intervals that are known to be invalid
-        // because they end before the requested start timestamp
-        final PeekingIterator<Interval> intervalIterator =
-            Iterators.peekingIterator(intervals.iterator());
-        while (intervalIterator.hasNext() &&
-               intervalIterator.peek().getEndMillis() <= start) {
-          intervalIterator.next();
+        @Override
+        public boolean hasNext()
+        {
+          return intervalIterator.hasNext() &&
+                 intervalIterator.peek().getStartMillis() < end;
         }
 
-        return new Iterator<Interval>()
+        @Override
+        public Interval next()
         {
-          @Override
-          public boolean hasNext()
-          {
-            return intervalIterator.hasNext() &&
-                   intervalIterator.peek().getStartMillis() < end;
+          if (!hasNext()) {
+            throw new NoSuchElementException();
           }
+          return intervalIterator.next();
+        }
 
-          @Override
-          public Interval next()
-          {
-            return intervalIterator.next();
-          }
-
-          @Override
-          public void remove()
-          {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
+        @Override
+        public void remove()
+        {
+          throw new UnsupportedOperationException();
+        }
+      };
     };
   }
 
