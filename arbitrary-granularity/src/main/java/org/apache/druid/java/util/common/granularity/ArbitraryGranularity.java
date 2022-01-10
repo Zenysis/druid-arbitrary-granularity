@@ -71,8 +71,10 @@ public class ArbitraryGranularity extends Granularity
     for (final Interval inputInterval : inputIntervals) {
       Interval adjustedInterval = inputInterval;
       if (timezone != null) {
-        adjustedInterval = new Interval(inputInterval.getStartMillis(),
-                                        inputInterval.getEndMillis(), timezone);
+        adjustedInterval = new Interval(
+                inputInterval.getStartMillis(),
+                inputInterval.getEndMillis(),
+                timezone);
       }
       intervals.add(adjustedInterval);
     }
@@ -137,7 +139,7 @@ public class ArbitraryGranularity extends Granularity
     }
 
     // First interval with start time <= timestamp
-    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis()));
+    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis(), timezone));
     return interval != null && interval.contains(time)
             ? interval.getEnd().getMillis()
             : MAX_DATETIME.getMillis(); // cannot be bucketed
@@ -168,7 +170,7 @@ public class ArbitraryGranularity extends Granularity
 
     // Find the interval that contains this time.
     // intervalStart <= time < intervalEnd.
-    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis()));
+    final Interval interval = intervals.floor(new Interval(time, MAX_DATETIME.getMillis(), timezone));
     if (interval == null || !interval.contains(time)) {
       return MAX_DATETIME.getMillis();
     }
