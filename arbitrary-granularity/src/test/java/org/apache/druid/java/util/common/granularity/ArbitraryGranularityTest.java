@@ -30,7 +30,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
+import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -53,7 +58,8 @@ public class ArbitraryGranularityTest
   }
 
   @Test
-  public void testGetIntervals() {
+  public void testGetIntervals()
+  {
     NavigableSet<Interval> set = new TreeSet<>(Comparators.intervalsByStartThenEnd());
     set.addAll(INTERVALS);
     assertEquals(set, granularity.getIntervals());
@@ -228,8 +234,8 @@ public class ArbitraryGranularityTest
   {
     //noinspection ResultOfObjectAllocationIgnored
     assertThrows(
-            IllegalArgumentException.class,
-            () -> new ArbitraryGranularity(Collections.emptyList(), null));
+        IllegalArgumentException.class,
+        () -> new ArbitraryGranularity(Collections.emptyList(), null));
   }
 
   @Test
@@ -241,7 +247,7 @@ public class ArbitraryGranularityTest
                     "2020-01-01T00:00:00.000Z/2020-01-02T00:00:00.000Z, " +
                     "2020-01-01T00:00:00.000Z/2020-02-01T00:00:00.000Z",
             IAE.class,
-            () -> new ArbitraryGranularity(ImmutableList.of(i0, i1), null));
+        () -> new ArbitraryGranularity(ImmutableList.of(i0, i1), null));
   }
 
   @Test
